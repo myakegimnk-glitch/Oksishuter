@@ -17,6 +17,7 @@ const defaults = () => ({
   stats: { hunger: 80, happiness: 80, energy: 80 },
   history: [],
   hasSeenWelcome: false,
+  bannerDismissed: false,
 });
 
 let state = load();

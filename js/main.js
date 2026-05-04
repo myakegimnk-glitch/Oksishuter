@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
   character.startIdleMouth();
+  refreshAiBanner();
 
   if (!storage.get().hasSeenWelcome) {
     showWelcome();
@@ -69,6 +70,11 @@ function cacheElements() {
   els.rateVal = document.getElementById("rate-value");
   els.pitchVal = document.getElementById("pitch-value");
   els.btnTestVoice = document.getElementById("btn-test-voice");
+
+  els.welcomeKey = document.getElementById("welcome-groq-key");
+  els.aiBanner = document.getElementById("ai-banner");
+  els.btnBannerSettings = document.getElementById("btn-banner-settings");
+  els.btnBannerDismiss = document.getElementById("btn-banner-dismiss");
 }
 
 function bindEvents() {
@@ -91,9 +97,28 @@ function bindEvents() {
 
   els.btnCloseSettings.addEventListener("click", closeSettings);
   els.btnWelcomeStart.addEventListener("click", () => {
+    const k = (els.welcomeKey?.value || "").trim();
+    if (k) storage.update({ groqKey: k });
     storage.update({ hasSeenWelcome: true });
     els.welcomeModal.hidden = true;
+    refreshAiBanner();
     greet();
+  });
+  els.welcomeKey?.addEventListener("input", (e) => {
+    const v = e.target.value.trim();
+    if (v) storage.update({ groqKey: v });
+    refreshAiBanner();
+  });
+
+  // AI banner
+  els.btnBannerSettings.addEventListener("click", () => {
+    els.aiBanner.hidden = true;
+    openSettings();
+    setTimeout(() => els.setKey?.focus(), 100);
+  });
+  els.btnBannerDismiss.addEventListener("click", () => {
+    storage.update({ bannerDismissed: true });
+    els.aiBanner.hidden = true;
   });
 
   // Settings inputs - live save
@@ -105,7 +130,10 @@ function bindEvents() {
     storage.update({ mode: e.target.value });
     updateModeButton();
   });
-  els.setKey.addEventListener("input", (e) => storage.update({ groqKey: e.target.value.trim() }));
+  els.setKey.addEventListener("input", (e) => {
+    storage.update({ groqKey: e.target.value.trim() });
+    refreshAiBanner();
+  });
   els.setModel.addEventListener("change", (e) => storage.update({ groqModel: e.target.value }));
   els.setPersona.addEventListener("input", (e) => storage.update({ persona: e.target.value }));
   els.setTts.addEventListener("change", (e) => storage.update({ tts: e.target.checked }));
@@ -169,7 +197,19 @@ function updateModeButton() {
 }
 
 function showWelcome() {
+  els.welcomeKey.value = storage.get().groqKey || "";
   els.welcomeModal.hidden = false;
+  els.aiBanner.hidden = true;
+}
+
+function refreshAiBanner() {
+  // Show banner only when no key is configured AND user hasn't dismissed it
+  // AND welcome modal is not currently up.
+  const s = storage.get();
+  const hasKey = !!(s.groqKey && s.groqKey.length > 10);
+  const welcomeUp = !els.welcomeModal.hidden;
+  const shouldShow = !hasKey && !s.bannerDismissed && !welcomeUp;
+  els.aiBanner.hidden = !shouldShow;
 }
 
 function openSettings() {

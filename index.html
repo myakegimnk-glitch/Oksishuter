@@ -179,10 +179,21 @@
           <li>😂 Рассказывать анекдоты</li>
           <li>📜 Помнить историю разговоров</li>
         </ul>
-        <p>Чтобы отвечать осмысленно, нужен бесплатный API-ключ Groq. <strong>Без ключа</strong> я тоже работаю — буду повторять за тобой как Том.</p>
+        <label class="field" style="margin-top: 4px;">
+          <span>Groq API ключ <a href="https://console.groq.com/keys" target="_blank" rel="noopener">получить бесплатно →</a></span>
+          <input type="password" id="welcome-groq-key" placeholder="gsk_..." autocomplete="off" />
+          <small style="color: var(--text-dim); font-size: 11px; line-height: 1.3;">Вставь сюда ключ — и я буду отвечать осмысленно через ИИ. Ключ хранится только в твоём браузере.<br>Без ключа я работаю как Том — повторяю за тобой высоким голосом.</small>
+        </label>
         <button id="btn-welcome-start" class="primary-btn">Начать!</button>
       </div>
     </div>
+  </div>
+
+  <!-- AI status banner -->
+  <div id="ai-banner" class="ai-banner" hidden>
+    <span>🤖 Чтобы Окси отвечала через ИИ — вставь Groq-ключ</span>
+    <button id="btn-banner-settings" class="banner-btn">Открыть ⚙️</button>
+    <button id="btn-banner-dismiss" class="banner-close" aria-label="Скрыть">✕</button>
   </div>
 
   <script>
