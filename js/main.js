@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
   character.init();
   ui.init();
   bindEvents();
+  // Allow magic-link key auto-import (#k=<groq_key>) — useful for first-time mobile setup.
+  importKeyFromHash();
   applyState();
   game.start({
     onUpdate: (stats) => {
@@ -429,4 +431,15 @@ async function testVoice() {
 
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function importKeyFromHash() {
+  const hash = window.location.hash || "";
+  if (!hash) return;
+  const params = new URLSearchParams(hash.slice(1));
+  const key = params.get("k") || params.get("groq");
+  if (!key) return;
+  storage.update({ groqKey: key.trim() });
+  // Strip the hash so the key isn't lingering in the URL bar.
+  history.replaceState(null, "", window.location.pathname + window.location.search);
 }

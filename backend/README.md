@@ -5,7 +5,7 @@
 ## Запуск локально
 
 ```bash
-cd talking/backend
+cd backend
 pip install -e .
 export OKSI=gsk_xxx  # или GROQ_API_KEY
 uvicorn app.main:app --port 8766 --reload

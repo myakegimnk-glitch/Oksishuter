@@ -1,46 +1,101 @@
-# Oksishuter
+# Говорящая Окси 🗣️
 
-3D FPS Wave Survival Shooter made with Godot 4.6
+Веб-игра в стиле «My Talking Tom», но с собственным персонажем и осмысленными ответами через бесплатный ИИ (Groq Llama 3.3).
 
-## Gameplay
-- First-person wave-based shooter
-- Survive enemy waves that get progressively harder
-- Earn coins by killing enemies and completing waves
-- Touch controls optimized for mobile play
+## Как запустить локально
 
-## Controls (Mobile)
-- **Left side of screen**: Drag to move (virtual joystick)
-- **Right side of screen**: Drag to look around
-- **FIRE button**: Shoot
-- **RELOAD button**: Reload weapon
+Это статический сайт без сборки. Просто:
 
-## Controls (Desktop)
-- **WASD**: Move
-- **Mouse**: Look around
-- **Left Click**: Shoot
-- **R**: Reload
-
-## How to Open in Godot Web Editor
-1. Download this repo as ZIP from GitHub (Code → Download ZIP)
-2. Go to [Godot Web Editor](https://editor.godotengine.org)
-3. Click "Import" and select the ZIP file
-4. Open the project
-
-## Project Structure
+```bash
+python3 -m http.server 8000
 ```
-project.godot          - Project configuration
-scenes/                - Scene files (.tscn)
-  main_menu.tscn       - Main menu scene
-  game_world.tscn      - Game level scene
-  hud.tscn             - HUD overlay scene
-scripts/               - GDScript files (.gd)
-  game_data.gd         - Global game data (autoload)
-  main_menu.gd         - Main menu logic
-  game_manager.gd      - Wave system & level builder
-  player.gd            - FPS player controller
-  enemy.gd             - Enemy AI
-  hud.gd               - HUD & touch controls
-textures/              - Game textures
-  enemies/             - Enemy sprites
-  ui/                  - UI textures
+
+И открыть в браузере http://localhost:8000
+
+> ⚠️ Микрофон/распознавание речи требует HTTPS или localhost. Из файла `file://` работать не будет.
+
+Для ИИ-ответов либо запусти бэкенд (см. [`backend/README.md`](backend/README.md)), либо введи свой Groq-ключ в настройках в игре.
+
+## Возможности
+
+- 🎤 **Распознавание речи** (Web Speech API, русский язык)
+- 🤖 **Ответы через ИИ** — Groq API, Llama 3.3 70B на бесплатном тарифе
+- 🦜 **Режим «эхо как у Тома»** — повторяет твой голос с высоким тоном
+- 👄 **Lip-sync** — рот Окси открывается синхронно с речью
+- 🍕 **Тамагочи-механика** — кормить, гладить, укладывать спать
+- 📊 **Статусы** — сытость, счастье, энергия (со временем падают)
+- 😂 **Анекдоты** — встроенный набор + через ИИ
+- 📜 **История разговоров** — сохраняется в localStorage
+- 💖 **Эмоции** — реакции на ключевые слова (любовь, грусть, удивление и т.д.)
+- 🎨 **Скины** — зелёная или розовая куртка
+- 📱 **PWA** — можно установить как приложение на телефон
+
+## Настройки (в шестерёнке ⚙️)
+
+| Поле | Описание |
+|------|----------|
+| Скин | Зелёная или розовая куртка Окси |
+| Режим | ИИ / Эхо / Оба |
+| Groq API ключ | Получить бесплатно: https://console.groq.com/keys |
+| Модель Groq | Llama 3.3 70B (по умолчанию), Llama 3.1 8B, Mixtral |
+| Личность Окси | Системный промпт — можно перенастроить под себя |
+| TTS | Озвучивать ответы голосом |
+| Высокий голос | Включить мультяшный тон |
+| Скорость / Высота | Регулировка голоса |
+
+## Как получить Groq API ключ
+
+1. Зайти на https://console.groq.com/keys
+2. Войти через Google (бесплатно)
+3. Нажать **Create API Key**
+4. Скопировать ключ (начинается с `gsk_...`)
+5. Вставить в настройки в игре
+
+API-ключ хранится только в `localStorage` твоего браузера, никуда не отправляется кроме самого Groq.
+
+## Архитектура
+
 ```
+.
+├── index.html             # Разметка
+├── style.css              # Стили (тёмная неоновая тема)
+├── manifest.json          # PWA-манифест
+├── assets/
+│   ├── oksi-green.png    # Скин по умолчанию
+│   └── oksi-pink.png     # Альтернативный скин
+├── js/
+│   ├── main.js           # Главный контроллер
+│   ├── speech.js         # STT (Web Speech API)
+│   ├── tts.js            # TTS (Speech Synthesis)
+│   ├── ai.js             # Groq API клиент
+│   ├── echo.js           # «Эхо как у Тома» (Web Audio + MediaRecorder)
+│   ├── character.js      # Анимации, lip-sync, эмоции
+│   ├── game.js           # Тамагочи-механика
+│   ├── ui.js             # UI хелперы
+│   └── storage.js        # localStorage
+└── backend/              # FastAPI прокси к Groq (опционально)
+    └── app/main.py
+```
+
+## Совместимость
+
+| Браузер | Распознавание | TTS | Эхо |
+|---------|---------------|-----|-----|
+| Chrome (Android/Desktop) | ✅ | ✅ | ✅ |
+| Edge | ✅ | ✅ | ✅ |
+| Safari (iOS 14+) | ⚠️ ограничено | ✅ | ✅ |
+| Firefox | ❌ | ✅ | ✅ |
+
+Для лучшего опыта используй **Chrome на Android**.
+
+## Деплой
+
+### Фронтенд
+
+Любой хостинг статики: GitHub Pages, Netlify, Vercel, Cloudflare Pages.
+
+GitHub Pages: включи Pages в Settings → Pages → Source: `main` / `/ (root)` — и сайт будет жить на `https://<user>.github.io/<repo>/`.
+
+### Бэкенд (необязательно)
+
+FastAPI-прокси к Groq, чтобы пользователю не нужно было вводить ключ. Деплоится одной командой на Fly.io / Render / любой хостинг Python. См. [`backend/README.md`](backend/README.md).
