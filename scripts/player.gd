@@ -1,26 +1,23 @@
 extends CharacterBody3D
 
-const SPEED := 5.0
+const SPEED := 5.5
 const JUMP_VELOCITY := 4.5
 const MOUSE_SENSITIVITY := 0.003
-const TOUCH_LOOK_SENSITIVITY := 0.005
+const TOUCH_LOOK_SENSITIVITY := 0.004
 
 @export var max_health: int = 100
 var health: int = 100
 var ammo: int = 30
 var max_ammo: int = 30
-var reserve_ammo: int = 90
+var reserve_ammo: int = 120
 var is_reloading: bool = false
 var reload_time: float = 1.5
 var reload_timer: float = 0.0
-var fire_rate: float = 0.12
+var fire_rate: float = 0.15
 var fire_timer: float = 0.0
-var damage_per_shot: int = 25
+var damage_per_shot: int = 30
 
 var joystick_input := Vector2.ZERO
-var look_touch_index: int = -1
-var look_touch_start := Vector2.ZERO
-var look_touch_current := Vector2.ZERO
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -33,6 +30,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 signal health_changed(new_health: int)
 signal ammo_changed(current: int, reserve: int)
 signal player_died
+signal reload_started
+signal reload_finished
 
 func _ready() -> void:
 	health = max_health
@@ -45,7 +44,7 @@ func _physics_process(delta: float) -> void:
 
 	var input_dir := Vector2.ZERO
 
-	if joystick_input.length() > 0.1:
+	if joystick_input.length() > 0.05:
 		input_dir = joystick_input
 	else:
 		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
@@ -55,8 +54,8 @@ func _physics_process(delta: float) -> void:
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-		velocity.z = move_toward(velocity.z, 0, SPEED)
+		velocity.x = move_toward(velocity.x, 0, SPEED * 0.8)
+		velocity.z = move_toward(velocity.z, 0, SPEED * 0.8)
 
 	move_and_slide()
 
@@ -68,7 +67,7 @@ func _physics_process(delta: float) -> void:
 			finish_reload()
 
 	if muzzle_flash and muzzle_flash.visible:
-		muzzle_flash.light_energy -= delta * 30
+		muzzle_flash.light_energy -= delta * 25
 		if muzzle_flash.light_energy <= 0:
 			muzzle_flash.visible = false
 
@@ -86,10 +85,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func apply_touch_look(relative: Vector2) -> void:
 	rotate_y(-relative.x * TOUCH_LOOK_SENSITIVITY)
 	head.rotate_x(-relative.y * TOUCH_LOOK_SENSITIVITY)
-	head.rotation.x = clamp(head.rotation.x, -PI / 2, PI / 2)
+	head.rotation.x = clamp(head.rotation.x, -1.4, 1.4)
 
 func try_shoot() -> void:
-	if is_reloading or fire_timer > 0 or ammo <= 0:
+	if is_reloading or fire_timer > 0:
+		return
+	if ammo <= 0:
+		if reserve_ammo > 0:
+			start_reload()
 		return
 	ammo -= 1
 	fire_timer = fire_rate
@@ -97,13 +100,13 @@ func try_shoot() -> void:
 
 	if muzzle_flash:
 		muzzle_flash.visible = true
-		muzzle_flash.light_energy = 3.0
+		muzzle_flash.light_energy = 4.0
 
 	animate_weapon_recoil()
 
 	if raycast and raycast.is_colliding():
 		var collider = raycast.get_collider()
-		if collider.has_method("take_damage"):
+		if collider and collider.has_method("take_damage"):
 			collider.take_damage(damage_per_shot)
 
 	if ammo <= 0 and reserve_ammo > 0:
@@ -112,14 +115,19 @@ func try_shoot() -> void:
 func animate_weapon_recoil() -> void:
 	if weapon_mesh:
 		var tween := create_tween()
-		tween.tween_property(weapon_mesh, "position:z", 0.05, 0.04)
-		tween.tween_property(weapon_mesh, "position:z", 0.0, 0.08)
+		tween.tween_property(weapon_mesh, "position:z", weapon_mesh.position.z + 0.06, 0.04)
+		tween.tween_property(weapon_mesh, "position:z", weapon_mesh.position.z, 0.1)
+		# Slight upward kick
+		var tween2 := create_tween()
+		tween2.tween_property(head, "rotation:x", head.rotation.x + 0.02, 0.04)
+		tween2.tween_property(head, "rotation:x", head.rotation.x, 0.12)
 
 func start_reload() -> void:
 	if is_reloading or reserve_ammo <= 0 or ammo == max_ammo:
 		return
 	is_reloading = true
 	reload_timer = reload_time
+	emit_signal("reload_started")
 
 func finish_reload() -> void:
 	var needed := max_ammo - ammo
@@ -128,6 +136,7 @@ func finish_reload() -> void:
 	reserve_ammo -= available
 	is_reloading = false
 	emit_signal("ammo_changed", ammo, reserve_ammo)
+	emit_signal("reload_finished")
 
 func take_damage(amount: int) -> void:
 	health -= amount
