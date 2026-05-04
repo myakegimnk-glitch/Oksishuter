@@ -1,0 +1,13 @@
+# Godot 4+ specific ignores
+.godot/
+*.tmp
+*.import
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Export
+export/
+*.apk
+*.aab
