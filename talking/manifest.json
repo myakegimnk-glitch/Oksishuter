@@ -1,0 +1,19 @@
+{
+  "name": "Говорящая Окси",
+  "short_name": "Окси",
+  "description": "Окси — твоя говорящая помощница с ИИ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a0a2e",
+  "theme_color": "#1a0a2e",
+  "icons": [
+    {
+      "src": "assets/oksi-green.png",
+      "sizes": "1024x1536",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

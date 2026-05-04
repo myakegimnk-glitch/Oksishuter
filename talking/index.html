@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a0a2e" />
+  <meta name="description" content="Говорящая Окси — твоя AI-помощница, как Том, только с мозгами" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="assets/oksi-green.png" />
+  <link rel="apple-touch-icon" href="assets/oksi-green.png" />
+  <title>Говорящая Окси</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="title">
+        <span class="logo">🗣️</span>
+        <h1>Говорящая Окси</h1>
+      </div>
+      <div class="status-bars">
+        <div class="stat" title="Сытость">
+          <span class="stat-icon">🍔</span>
+          <div class="stat-bar"><div class="stat-fill" id="stat-hunger"></div></div>
+        </div>
+        <div class="stat" title="Счастье">
+          <span class="stat-icon">😊</span>
+          <div class="stat-bar"><div class="stat-fill" id="stat-happiness"></div></div>
+        </div>
+        <div class="stat" title="Энергия">
+          <span class="stat-icon">⚡</span>
+          <div class="stat-bar"><div class="stat-fill" id="stat-energy"></div></div>
+        </div>
+      </div>
+      <button id="btn-settings" class="icon-btn" aria-label="Настройки">⚙️</button>
+    </header>
+
+    <main class="stage">
+      <div id="character" class="character" aria-label="Окси">
+        <img id="character-img" src="assets/oksi-green.png" alt="Окси" draggable="false" />
+        <div id="mouth-overlay" class="mouth-overlay"></div>
+        <div id="emote" class="emote"></div>
+        <div id="zzz" class="zzz" hidden>💤💤💤</div>
+        <div id="heart" class="heart" hidden>❤️</div>
+      </div>
+
+      <div id="speech-bubble" class="speech-bubble" hidden>
+        <p id="speech-text"></p>
+      </div>
+
+      <div id="listening-indicator" class="listening-indicator" hidden>
+        <span class="pulse"></span>
+        <span class="listening-text">Слушаю...</span>
+      </div>
+    </main>
+
+    <section class="actions">
+      <button class="action-btn" id="btn-talk" aria-label="Говорить">
+        <span class="action-icon">🎤</span>
+        <span class="action-label">Говорить</span>
+      </button>
+      <button class="action-btn" id="btn-feed" aria-label="Покормить">
+        <span class="action-icon">🍕</span>
+        <span class="action-label">Кормить</span>
+      </button>
+      <button class="action-btn" id="btn-pet" aria-label="Погладить">
+        <span class="action-icon">🤗</span>
+        <span class="action-label">Гладить</span>
+      </button>
+      <button class="action-btn" id="btn-sleep" aria-label="Уложить спать">
+        <span class="action-icon">💤</span>
+        <span class="action-label">Спать</span>
+      </button>
+      <button class="action-btn" id="btn-joke" aria-label="Анекдот">
+        <span class="action-icon">😂</span>
+        <span class="action-label">Анекдот</span>
+      </button>
+      <button class="action-btn" id="btn-mode" aria-label="Режим">
+        <span class="action-icon" id="mode-icon">🤖</span>
+        <span class="action-label" id="mode-label">ИИ</span>
+      </button>
+    </section>
+
+    <section id="history" class="history" hidden>
+      <div class="history-head">
+        <h2>История</h2>
+        <button id="btn-clear-history" class="text-btn">Очистить</button>
+        <button id="btn-close-history" class="icon-btn">✕</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+
+    <button id="btn-history" class="floating-btn" aria-label="История">📜</button>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settings-modal" class="modal" hidden>
+    <div class="modal-content">
+      <header class="modal-head">
+        <h2>Настройки</h2>
+        <button id="btn-close-settings" class="icon-btn">✕</button>
+      </header>
+      <div class="modal-body">
+        <label class="field">
+          <span>Скин Окси</span>
+          <select id="setting-skin">
+            <option value="green">Зелёная куртка</option>
+            <option value="pink">Розовая куртка</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Режим общения</span>
+          <select id="setting-mode">
+            <option value="ai">ИИ — отвечает осмысленно (Groq)</option>
+            <option value="echo">Эхо — повторяет высоким голосом (как Том)</option>
+            <option value="both">Оба — переключай на лету</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Groq API ключ <a href="https://console.groq.com/keys" target="_blank" rel="noopener">получить →</a></span>
+          <input type="password" id="setting-groq-key" placeholder="gsk_..." autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Модель Groq</span>
+          <select id="setting-groq-model">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (рекомендую)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (быстрее)</option>
+            <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Личность Окси (system prompt)</span>
+          <textarea id="setting-persona" rows="4"></textarea>
+        </label>
+
+        <label class="field row">
+          <input type="checkbox" id="setting-tts" checked />
+          <span>Озвучивать ответы (TTS)</span>
+        </label>
+
+        <label class="field row">
+          <input type="checkbox" id="setting-pitch" checked />
+          <span>Высокий «мультяшный» голос</span>
+        </label>
+
+        <label class="field">
+          <span>Скорость речи: <span id="rate-value">1.05</span></span>
+          <input type="range" id="setting-rate" min="0.7" max="1.6" step="0.05" value="1.05" />
+        </label>
+
+        <label class="field">
+          <span>Высота тона: <span id="pitch-value">1.4</span></span>
+          <input type="range" id="setting-pitch-value" min="0.5" max="2" step="0.05" value="1.4" />
+        </label>
+
+        <button id="btn-test-voice" class="primary-btn">🔊 Проверить голос</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome / first-run modal -->
+  <div id="welcome-modal" class="modal" hidden>
+    <div class="modal-content">
+      <header class="modal-head">
+        <h2>Привет! Я Окси 👋</h2>
+      </header>
+      <div class="modal-body">
+        <p>Я твоя говорящая помощница. Умею:</p>
+        <ul class="feature-list">
+          <li>🎤 Понимать твою речь</li>
+          <li>🤖 Отвечать через ИИ (Groq Llama)</li>
+          <li>🐱 Повторять за тобой высоким голосом (как Том)</li>
+          <li>🍕 Принимать еду, ласку, сон</li>
+          <li>😂 Рассказывать анекдоты</li>
+          <li>📜 Помнить историю разговоров</li>
+        </ul>
+        <p>Чтобы отвечать осмысленно, нужен бесплатный API-ключ Groq. <strong>Без ключа</strong> я тоже работаю — буду повторять за тобой как Том.</p>
+        <button id="btn-welcome-start" class="primary-btn">Начать!</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
