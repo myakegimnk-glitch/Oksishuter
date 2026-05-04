@@ -25,6 +25,7 @@ var enemy_textures: Array[String] = [
 var player: CharacterBody3D
 var hud: CanvasLayer
 var spawn_container: Node3D
+var player_camera: Camera3D
 
 func _ready() -> void:
 	build_environment()
@@ -33,13 +34,19 @@ func _ready() -> void:
 	spawn_container = Node3D.new()
 	spawn_container.name = "SpawnContainer"
 	add_child(spawn_container)
+	# Activate camera after everything is in the tree
+	call_deferred("_activate_camera")
+
+func _activate_camera() -> void:
+	if player_camera and is_instance_valid(player_camera):
+		player_camera.current = true
 
 func build_environment() -> void:
 	# Directional light (sun)
 	var light := DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-50, 25, 0)
 	light.shadow_enabled = true
-	light.light_energy = 1.3
+	light.light_energy = 1.2
 	light.light_color = Color(1, 0.95, 0.9)
 	add_child(light)
 
@@ -50,37 +57,22 @@ func build_environment() -> void:
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.4, 0.45, 0.55)
 	env.ambient_light_energy = 0.6
-	env.tonemap_mode = Environment.TONE_MAP_ACES
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.5, 0.6, 0.75)
-	env.fog_density = 0.006
+	env.fog_density = 0.005
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
 
 	# ---- GROUND ----
-	# Main floor
-	create_static_box(Vector3(0, -0.25, 0), Vector3(70, 0.5, 70), Color(0.28, 0.32, 0.25))
-	# Floor detail grid lines
-	for i in range(-30, 31, 10):
-		create_static_box(Vector3(float(i), 0.01, 0), Vector3(0.05, 0.02, 70), Color(0.35, 0.38, 0.3))
-		create_static_box(Vector3(0, 0.01, float(i)), Vector3(70, 0.02, 0.05), Color(0.35, 0.38, 0.3))
+	create_static_box(Vector3(0, -0.5, 0), Vector3(70, 1, 70), Color(0.28, 0.32, 0.25))
 
 	# ---- WALLS ----
 	var wall_color := Color(0.45, 0.4, 0.35)
-	var wall_top := Color(0.55, 0.5, 0.4)
-	# North
 	create_static_box(Vector3(0, 3, -35), Vector3(70, 6, 1.5), wall_color)
-	create_static_box(Vector3(0, 6.2, -35), Vector3(70, 0.4, 2), wall_top)
-	# South
 	create_static_box(Vector3(0, 3, 35), Vector3(70, 6, 1.5), wall_color)
-	create_static_box(Vector3(0, 6.2, 35), Vector3(70, 0.4, 2), wall_top)
-	# East
 	create_static_box(Vector3(35, 3, 0), Vector3(1.5, 6, 70), wall_color)
-	create_static_box(Vector3(35, 6.2, 0), Vector3(2, 0.4, 70), wall_top)
-	# West
 	create_static_box(Vector3(-35, 3, 0), Vector3(1.5, 6, 70), wall_color)
-	create_static_box(Vector3(-35, 6.2, 0), Vector3(2, 0.4, 70), wall_top)
 
 	# ---- COVER OBJECTS ----
 	var cover_color := Color(0.5, 0.48, 0.4)
@@ -98,32 +90,23 @@ func build_environment() -> void:
 	create_static_box(Vector3(20, 0.7, -5), Vector3(1.2, 1.4, 5), cover_dark)
 	create_static_box(Vector3(5, 0.7, 18), Vector3(5, 1.4, 1.2), cover_dark)
 
-	# Pillars / columns
+	# Pillars
 	var pillar_color := Color(0.55, 0.5, 0.45)
 	create_static_box(Vector3(12, 2, -20), Vector3(1.5, 4, 1.5), pillar_color)
 	create_static_box(Vector3(-12, 2, -20), Vector3(1.5, 4, 1.5), pillar_color)
 	create_static_box(Vector3(12, 2, 20), Vector3(1.5, 4, 1.5), pillar_color)
 	create_static_box(Vector3(-12, 2, 20), Vector3(1.5, 4, 1.5), pillar_color)
-	create_static_box(Vector3(0, 2, 0), Vector3(2, 4, 2), pillar_color)
 
 	# Crate stacks
 	var crate_color := Color(0.55, 0.4, 0.25)
 	create_static_box(Vector3(-25, 0.5, -15), Vector3(2, 1, 2), crate_color)
 	create_static_box(Vector3(-25, 1.5, -15), Vector3(1.5, 1, 1.5), crate_color)
 	create_static_box(Vector3(25, 0.5, 15), Vector3(2, 1, 2), crate_color)
-	create_static_box(Vector3(25, 1.5, 15), Vector3(1.5, 1, 1.5), crate_color)
-	create_static_box(Vector3(-18, 0.5, 22), Vector3(2, 1, 2), crate_color)
 	create_static_box(Vector3(22, 0.5, -22), Vector3(2, 1, 2), crate_color)
 
-	# Low walls / rubble
+	# Low walls
 	create_static_box(Vector3(-5, 0.35, -5), Vector3(3, 0.7, 0.6), Color(0.4, 0.38, 0.35))
 	create_static_box(Vector3(5, 0.35, 5), Vector3(0.6, 0.7, 3), Color(0.4, 0.38, 0.35))
-	create_static_box(Vector3(-15, 0.35, 15), Vector3(2.5, 0.7, 0.6), Color(0.4, 0.38, 0.35))
-	create_static_box(Vector3(18, 0.35, -12), Vector3(0.6, 0.7, 2.5), Color(0.4, 0.38, 0.35))
-
-	# Ramps
-	create_static_box(Vector3(28, 0.4, -28), Vector3(4, 0.8, 4), Color(0.4, 0.42, 0.38))
-	create_static_box(Vector3(-28, 0.4, 28), Vector3(4, 0.8, 4), Color(0.4, 0.42, 0.38))
 
 func create_static_box(pos: Vector3, size: Vector3, color: Color) -> void:
 	var body := StaticBody3D.new()
@@ -151,7 +134,7 @@ func build_player() -> void:
 	player.name = "Player"
 	player.collision_layer = 2
 	player.collision_mask = 1
-	player.position = Vector3(0, 1, 0)
+	player.position = Vector3(0, 1.0, 0)
 	player.add_to_group("player")
 
 	var col := CollisionShape3D.new()
@@ -169,8 +152,9 @@ func build_player() -> void:
 	var camera := Camera3D.new()
 	camera.name = "Camera3D"
 	camera.fov = 70.0
-	camera.current = true
+	# Do NOT set camera.current here — will be set via call_deferred after tree entry
 	head.add_child(camera)
+	player_camera = camera
 
 	var raycast := RayCast3D.new()
 	raycast.name = "RayCast3D"
@@ -188,7 +172,7 @@ func build_player() -> void:
 	muzzle.position = Vector3(0.25, -0.15, -0.7)
 	camera.add_child(muzzle)
 
-	# Weapon visual — gun shape
+	# Weapon
 	var gun_body := MeshInstance3D.new()
 	gun_body.name = "WeaponMesh"
 	var gun_mesh := BoxMesh.new()
@@ -210,7 +194,7 @@ func build_player() -> void:
 	grip.material_override = gun_mat
 	camera.add_child(grip)
 
-	# Gun barrel tip
+	# Barrel tip
 	var barrel := MeshInstance3D.new()
 	var barrel_mesh := BoxMesh.new()
 	barrel_mesh.size = Vector3(0.035, 0.035, 0.08)
@@ -222,16 +206,26 @@ func build_player() -> void:
 	barrel.material_override = barrel_mat
 	camera.add_child(barrel)
 
-	var script := load("res://scripts/player.gd")
-	player.set_script(script)
-
+	# Add player to tree FIRST, then set script
 	add_child(player)
 
-	player.health_changed.connect(_on_player_health_changed)
-	player.ammo_changed.connect(_on_player_ammo_changed)
-	player.player_died.connect(_on_player_died)
-	player.reload_started.connect(_on_player_reload_started)
-	player.reload_finished.connect(_on_player_reload_finished)
+	var script := load("res://scripts/player.gd")
+	if script:
+		player.set_script(script)
+	else:
+		push_error("Failed to load player.gd")
+
+	# Connect signals after script is applied
+	if player.has_signal("health_changed"):
+		player.health_changed.connect(_on_player_health_changed)
+	if player.has_signal("ammo_changed"):
+		player.ammo_changed.connect(_on_player_ammo_changed)
+	if player.has_signal("player_died"):
+		player.player_died.connect(_on_player_died)
+	if player.has_signal("reload_started"):
+		player.reload_started.connect(_on_player_reload_started)
+	if player.has_signal("reload_finished"):
+		player.reload_finished.connect(_on_player_reload_finished)
 
 func build_hud() -> void:
 	var hud_scene := load("res://scenes/hud.tscn")
@@ -239,10 +233,12 @@ func build_hud() -> void:
 		hud = hud_scene.instantiate()
 		add_child(hud)
 	else:
+		push_warning("Could not load HUD scene")
 		hud = CanvasLayer.new()
 		hud.name = "HUD"
 		var script := load("res://scripts/hud.gd")
-		hud.set_script(script)
+		if script:
+			hud.set_script(script)
 		add_child(hud)
 
 func _process(delta: float) -> void:
@@ -293,8 +289,7 @@ func complete_wave() -> void:
 	if GameData.highest_wave < current_wave:
 		GameData.highest_wave = current_wave
 
-	# Give ammo bonus each wave
-	if player and player.has_method("set_joystick_input"):
+	if player:
 		player.reserve_ammo += 30
 
 	if hud and hud.has_method("show_wave_complete"):
@@ -303,7 +298,7 @@ func complete_wave() -> void:
 		hud.update_money(GameData.money)
 
 func spawn_enemy() -> void:
-	if not player:
+	if not player or not is_instance_valid(player):
 		return
 
 	var enemy_node := CharacterBody3D.new()
@@ -312,10 +307,10 @@ func spawn_enemy() -> void:
 	enemy_node.collision_mask = 1
 
 	var collision := CollisionShape3D.new()
-	var shape := CapsuleShape3D.new()
-	shape.radius = 0.35
-	shape.height = 1.4
-	collision.shape = shape
+	var cshape := CapsuleShape3D.new()
+	cshape.radius = 0.35
+	cshape.height = 1.4
+	collision.shape = cshape
 	collision.position.y = 0.7
 	enemy_node.add_child(collision)
 
@@ -324,21 +319,11 @@ func spawn_enemy() -> void:
 	sprite.pixel_size = 0.0015
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	var tex_path: String = enemy_textures[randi() % enemy_textures.size()]
-	var tex := load(tex_path)
+	var tex = load(tex_path)
 	if tex:
 		sprite.texture = tex
 	sprite.position.y = 0.8
 	enemy_node.add_child(sprite)
-
-	var script := load("res://scripts/enemy.gd")
-	enemy_node.set_script(script)
-
-	var health_mult := 1.0 + (current_wave - 1) * 0.25
-	enemy_node.max_health = int(80 * health_mult)
-	enemy_node.speed = 2.0 + current_wave * 0.25
-	enemy_node.money_reward = 10 + current_wave * 3
-	enemy_node.attack_damage = 8 + current_wave * 2
-	enemy_node.attack_range = 2.5
 
 	var angle := randf() * TAU
 	var dist := randf_range(min_spawn_distance, spawn_radius)
@@ -350,7 +335,21 @@ func spawn_enemy() -> void:
 	spawn_container.add_child(enemy_node)
 	enemy_node.global_position = spawn_pos
 
-	enemy_node.enemy_died.connect(_on_enemy_died)
+	# Set script AFTER adding to tree
+	var script := load("res://scripts/enemy.gd")
+	if script:
+		enemy_node.set_script(script)
+
+	var health_mult := 1.0 + (current_wave - 1) * 0.25
+	enemy_node.max_health = int(80 * health_mult)
+	enemy_node.health = enemy_node.max_health
+	enemy_node.speed = 2.0 + current_wave * 0.25
+	enemy_node.money_reward = 10 + current_wave * 3
+	enemy_node.attack_damage = 8 + current_wave * 2
+	enemy_node.attack_range = 2.5
+
+	if enemy_node.has_signal("enemy_died"):
+		enemy_node.enemy_died.connect(_on_enemy_died)
 	enemies_alive += 1
 
 func _on_enemy_died(reward: int) -> void:

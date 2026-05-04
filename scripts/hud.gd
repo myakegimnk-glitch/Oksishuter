@@ -200,7 +200,7 @@ func build_touch_controls() -> void:
 	touch_layer.anchors_preset = Control.PRESET_FULL_RECT
 	touch_layer.anchor_right = 1.0
 	touch_layer.anchor_bottom = 1.0
-	touch_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	touch_layer.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(touch_layer)
 
 	# Joystick base (visible when touching)
