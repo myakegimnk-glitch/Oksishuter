@@ -186,6 +186,12 @@
     </div>
   </div>
 
+  <script>
+    // Default backend (proxies Groq with the server-side OKSI key).
+    // Override at runtime via ?backend=URL or by setting window.OKSI_BACKEND
+    // before this script runs. Empty string disables the default.
+    window.OKSI_BACKEND = window.OKSI_BACKEND ?? "https://oksi-talking-backend-ftbfruir.fly.dev";
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
