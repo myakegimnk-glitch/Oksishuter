@@ -19,11 +19,11 @@ var damage_per_shot: int = 30
 
 var joystick_input := Vector2.ZERO
 
-@onready var head: Node3D = $Head
-@onready var camera: Camera3D = $Head/Camera3D
-@onready var raycast: RayCast3D = $Head/Camera3D/RayCast3D
-@onready var muzzle_flash: OmniLight3D = $Head/Camera3D/MuzzleFlash
-@onready var weapon_mesh: MeshInstance3D = $Head/Camera3D/WeaponMesh
+var head: Node3D
+var camera: Camera3D
+var raycast: RayCast3D
+var muzzle_flash: OmniLight3D
+var weapon_mesh: MeshInstance3D
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -35,6 +35,14 @@ signal reload_finished
 
 func _ready() -> void:
 	health = max_health
+	# Find child nodes by name (works whether built programmatically or from scene)
+	head = get_node_or_null("Head")
+	if head:
+		camera = head.get_node_or_null("Camera3D")
+		if camera:
+			raycast = camera.get_node_or_null("RayCast3D")
+			muzzle_flash = camera.get_node_or_null("MuzzleFlash")
+			weapon_mesh = camera.get_node_or_null("WeaponMesh")
 	if muzzle_flash:
 		muzzle_flash.visible = false
 
@@ -73,9 +81,10 @@ func _physics_process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
-		head.rotation.x = clamp(head.rotation.x, -PI / 2, PI / 2)
+		if head:
+			rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
+			head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+			head.rotation.x = clamp(head.rotation.x, -PI / 2, PI / 2)
 
 	if event.is_action_pressed("shoot"):
 		try_shoot()
@@ -83,9 +92,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		start_reload()
 
 func apply_touch_look(relative: Vector2) -> void:
-	rotate_y(-relative.x * TOUCH_LOOK_SENSITIVITY)
-	head.rotate_x(-relative.y * TOUCH_LOOK_SENSITIVITY)
-	head.rotation.x = clamp(head.rotation.x, -1.4, 1.4)
+	if head:
+		rotate_y(-relative.x * TOUCH_LOOK_SENSITIVITY)
+		head.rotate_x(-relative.y * TOUCH_LOOK_SENSITIVITY)
+		head.rotation.x = clamp(head.rotation.x, -1.4, 1.4)
 
 func try_shoot() -> void:
 	if is_reloading or fire_timer > 0:
@@ -117,7 +127,7 @@ func animate_weapon_recoil() -> void:
 		var tween := create_tween()
 		tween.tween_property(weapon_mesh, "position:z", weapon_mesh.position.z + 0.06, 0.04)
 		tween.tween_property(weapon_mesh, "position:z", weapon_mesh.position.z, 0.1)
-		# Slight upward kick
+	if head:
 		var tween2 := create_tween()
 		tween2.tween_property(head, "rotation:x", head.rotation.x + 0.02, 0.04)
 		tween2.tween_property(head, "rotation:x", head.rotation.x, 0.12)

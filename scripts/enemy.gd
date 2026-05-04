@@ -12,13 +12,13 @@ var target: Node3D = null
 var attack_timer: float = 0.0
 var is_dead: bool = false
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-
-@onready var sprite: Sprite3D = $Sprite3D
+var sprite: Sprite3D = null
 
 signal enemy_died(reward: int)
 
 func _ready() -> void:
 	health = max_health
+	sprite = get_node_or_null("Sprite3D")
 	find_player()
 
 func find_player() -> void:
@@ -86,3 +86,5 @@ func die() -> void:
 		tween.tween_property(sprite, "modulate:a", 0.0, 0.25)
 		tween.tween_property(self, "scale", Vector3(0.01, 0.01, 0.01), 0.2)
 		tween.tween_callback(queue_free)
+	else:
+		queue_free()
